@@ -31,6 +31,8 @@
     --c-afastamento:#64748b;
     --c-hextra:#a855f7;
     --c-bh:#06b6d4;
+    --c-bhf:#ec4899;
+    --c-sa:#f97316;
     --c-empty: transparent;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
@@ -167,6 +169,15 @@
   .cell[data-status="D"]{ background:var(--c-afastamento); color:#e8eaed; }
   .cell[data-status="HE"]{ background:var(--c-hextra); color:#2b0a3d; font-size:8.5px; }
   .cell[data-status="BH"]{ background:var(--c-bh); color:#03242b; font-size:8.5px; }
+  .cell[data-status="BF"]{ background:var(--c-bhf); color:#3d0620; font-size:8.5px; }
+  .cell[data-status="SA"]{ background:var(--c-sa); color:#3d1704; font-size:8.5px; }
+
+  thead th.holiday::after{
+    content:''; position:absolute; bottom:-6px; left:50%; transform:translateX(-50%);
+    width:6px; height:6px; border-radius:50%; background:var(--c-sa);
+  }
+  .status-opt.disabled{ opacity:.35; }
+  .status-opt .note{ font-size:11px; color:var(--text-dim); margin-left:auto; }
 
   .empty-state{
     margin:40px 20px; text-align:center; color:var(--text-dim); font-size:14px; line-height:1.6;
@@ -247,6 +258,8 @@
   <div class="chip"><span class="dot" style="background:var(--c-afastamento)"></span>Afastamento</div>
   <div class="chip"><span class="dot" style="background:var(--c-hextra)"></span>Hora Extra</div>
   <div class="chip"><span class="dot" style="background:var(--c-bh)"></span>BH · Banco de Horas</div>
+  <div class="chip"><span class="dot" style="background:var(--c-bhf)"></span>BH Folga</div>
+  <div class="chip"><span class="dot" style="background:var(--c-sa)"></span>Saída Antecipada</div>
 </div>
 
 <div class="board-wrap" id="boardWrap"></div>
@@ -275,7 +288,9 @@
     {code:'A', label:'Atestado', color:'var(--c-atestado)'},
     {code:'D', label:'Afastamento', color:'var(--c-afastamento)'},
     {code:'HE', label:'Hora Extra', color:'var(--c-hextra)'},
-    {code:'BH', label:'BH · Banco de Horas', color:'var(--c-bh)'}
+    {code:'BH', label:'BH · Banco de Horas', color:'var(--c-bh)', sundayHolidayOnly:true},
+    {code:'BF', label:'BH Folga (usar banco)', color:'var(--c-bhf)'},
+    {code:'SA', label:'Saída Antecipada', color:'var(--c-sa)', needsTime:true}
   ];
   var WEEKDAYS = ['D','S','T','Q','Q','S','S'];
 
@@ -296,6 +311,16 @@
   function monthKey(y,m){ return y+'-'+String(m+1).padStart(2,'0'); }
   function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
   function uid(){ return 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+  function dateStr(y,m,d){ return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'); }
+  function isHoliday(y,m,d){ return !!(state.holidays && state.holidays[dateStr(y,m,d)]); }
+  function isSunday(y,m,d){ return new Date(y,m,d).getDay() === 0; }
+  function toggleHoliday(y,m,d){
+    if(!state.holidays) state.holidays = {};
+    var key = dateStr(y,m,d);
+    if(state.holidays[key]) delete state.holidays[key];
+    else state.holidays[key] = true;
+    save();
+  }
 
   var sectorInput = document.getElementById('sectorInput');
   var monthLabel = document.getElementById('monthLabel');
@@ -352,7 +377,12 @@
     state.employees.forEach(function(emp){
       var row = [emp.name || '(sem nome)'];
       var monthData = (state.schedule[key] && state.schedule[key][emp.id]) || {};
-      for(var d=1; d<=nd; d++) row.push(monthData[d] || '');
+      for(var d=1; d<=nd; d++){
+        var raw = monthData[d] || '';
+        var code = getCellCode(raw);
+        var t = getCellTime(raw);
+        row.push(code ? (t ? code+' ('+t+')' : code) : '');
+      }
       rows.push(row.join(';'));
     });
     var csv = rows.join('\n');
@@ -372,18 +402,21 @@
     var key = monthKey(current.y, current.m);
     return (state.schedule[key] && state.schedule[key][empId] && state.schedule[key][empId][day]) || '';
   }
-  function setCell(empId, day, code){
+  function getCellCode(raw){ return raw ? raw.split('|')[0] : ''; }
+  function getCellTime(raw){ var parts = raw ? raw.split('|') : []; return parts[1] || ''; }
+  function setCell(empId, day, value){
     var key = monthKey(current.y, current.m);
     if(!state.schedule[key]) state.schedule[key] = {};
     if(!state.schedule[key][empId]) state.schedule[key][empId] = {};
-    if(code === '') delete state.schedule[key][empId][day];
-    else state.schedule[key][empId][day] = code;
+    if(value === '') delete state.schedule[key][empId][day];
+    else state.schedule[key][empId][day] = value;
     save();
   }
 
   function openStatusModal(empId, day, cellEl){
     modalTitle.textContent = 'Dia '+day+' — definir status';
     statusOpts.innerHTML = '';
+    var eligibleBH = isSunday(current.y, current.m, day) || isHoliday(current.y, current.m, day);
 
     var eraseEl = document.createElement('div');
     eraseEl.className = 'status-opt erase';
@@ -401,14 +434,31 @@
     statusOpts.appendChild(divider);
 
     STATUSES.forEach(function(s){
+      var blocked = s.sundayHolidayOnly && !eligibleBH;
       var el = document.createElement('div');
-      el.className = 'status-opt';
-      var dotStyle = s.color ? 'background:'+s.color : 'background:transparent;border:1px dashed #555';
-      el.innerHTML = '<span class="dot" style="'+dotStyle+'"></span><span>'+s.label+'</span>';
+      el.className = 'status-opt' + (blocked ? ' disabled' : '');
+      var dotStyle = 'background:'+s.color;
+      var noteHtml = s.sundayHolidayOnly ? '<span class="note">dom/feriado</span>' : '';
+      el.innerHTML = '<span class="dot" style="'+dotStyle+'"></span><span>'+s.label+'</span>'+noteHtml;
       el.addEventListener('click', function(){
-        setCell(empId, day, s.code);
-        cellEl.setAttribute('data-status', s.code);
-        cellEl.textContent = s.code;
+        if(blocked){
+          alert('Banco de Horas só pode ser marcado em domingo ou feriado.\n\nPra marcar um dia como feriado, toque e segure o número do dia no cabeçalho da tabela.');
+          return;
+        }
+        if(s.needsTime){
+          var existing = getCellTime(getCell(empId, day));
+          var t = prompt('Horário da saída antecipada (ex: 11:30):', existing || '');
+          if(t === null) return;
+          t = t.trim();
+          if(t === ''){ return; }
+          setCell(empId, day, s.code+'|'+t);
+          cellEl.setAttribute('data-status', s.code);
+          cellEl.textContent = s.code;
+        } else {
+          setCell(empId, day, s.code);
+          cellEl.setAttribute('data-status', s.code);
+          cellEl.textContent = s.code;
+        }
         closeModal();
       });
       statusOpts.appendChild(el);
@@ -455,8 +505,27 @@
       var dow = new Date(current.y, current.m, d).getDay();
       var th = document.createElement('th');
       var isWknd = (dow === 0 || dow === 6);
-      if(isWknd) th.className = 'wknd';
+      var classes = [];
+      if(isWknd) classes.push('wknd');
+      if(isHoliday(current.y, current.m, d)) classes.push('holiday');
+      th.className = classes.join(' ');
       th.innerHTML = '<span class="daynum">'+d+'</span><span class="wk">'+WEEKDAYS[dow]+'</span>';
+      (function(day){
+        var pressTimer = null;
+        var startPress = function(){
+          pressTimer = setTimeout(function(){
+            toggleHoliday(current.y, current.m, day);
+            render();
+          }, 500);
+        };
+        var cancelPress = function(){ if(pressTimer){ clearTimeout(pressTimer); pressTimer = null; } };
+        th.addEventListener('touchstart', startPress, {passive:true});
+        th.addEventListener('touchend', cancelPress);
+        th.addEventListener('touchmove', cancelPress);
+        th.addEventListener('mousedown', startPress);
+        th.addEventListener('mouseup', cancelPress);
+        th.addEventListener('mouseleave', cancelPress);
+      })(d);
       htr.appendChild(th);
     }
     thead.appendChild(htr);
@@ -491,7 +560,7 @@
           var td = document.createElement('td');
           var cell = document.createElement('div');
           cell.className = 'cell';
-          var code = getCell(emp.id, day);
+          var code = getCellCode(getCell(emp.id, day));
           if(code){ cell.setAttribute('data-status', code); cell.textContent = code; }
           cell.addEventListener('click', function(){
             openStatusModal(emp.id, day, cell);
