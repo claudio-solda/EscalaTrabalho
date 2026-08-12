@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#12151a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Escala de Trabalho</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg:#12151a;
+    --surface:#1b2028;
+    --surface2:#242b35;
+    --surface3:#2c3440;
+    --line:#323a46;
+    --text:#e8eaed;
+    --text-dim:#8b93a1;
+    --amber:#ffb020;
+    --amber-dim:#7a5a1f;
+    --c-trabalho:#3b82f6;
+    --c-folga:#ef4444;
+    --c-ferias:#22c55e;
+    --c-atestado:#eab308;
+    --c-afastamento:#64748b;
+    --c-empty: transparent;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:'Inter',system-ui,sans-serif; overflow-x:hidden;}
+  body{padding-bottom:env(safe-area-inset-bottom);}
+
+  .stamp{
+    font-family:'Oswald',sans-serif; font-weight:700; letter-spacing:.04em;
+    text-transform:uppercase;
+  }
+
+  header{
+    position:sticky; top:0; z-index:20;
+    background:linear-gradient(180deg,var(--bg) 80%, rgba(18,21,26,0));
+    padding:18px 16px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{
+    display:flex; align-items:baseline; gap:8px; margin-bottom:14px;
+  }
+  .brand .mark{
+    width:10px; height:22px; background:var(--amber); border-radius:1px;
+    box-shadow:0 0 8px rgba(255,176,32,.5);
+  }
+  .brand h1{
+    font-size:20px; margin:0; letter-spacing:.06em;
+  }
+  .brand h1 span{color:var(--amber);}
+
+  .plate{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; margin-bottom:10px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .plate label{
+    font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-dim);
+    white-space:nowrap;
+  }
+  .plate input[type=text]{
+    background:transparent; border:none; color:var(--text); font-family:'Oswald',sans-serif;
+    font-weight:600; font-size:16px; letter-spacing:.03em; width:100%; outline:none;
+    text-transform:uppercase;
+  }
+  .plate input[type=text]::placeholder{color:var(--text-dim); text-transform:none; font-family:'Inter',sans-serif; font-weight:400;}
+
+  .month-row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .month-nav{
+    display:flex; align-items:center; gap:6px; background:var(--surface);
+    border:1px solid var(--line); border-radius:10px; padding:6px 8px;
+  }
+  .month-nav button{
+    background:var(--surface3); border:none; color:var(--amber); width:30px; height:30px;
+    border-radius:8px; font-size:16px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  }
+  .month-nav button:active{background:var(--amber-dim); color:#12151a;}
+  .month-label{
+    font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600;
+    min-width:110px; text-align:center; text-transform:uppercase; letter-spacing:.05em;
+  }
+  .add-btn{
+    background:var(--amber); color:#1a1204; border:none; border-radius:10px;
+    padding:8px 14px; font-family:'Oswald',sans-serif; font-weight:600; font-size:13px;
+    letter-spacing:.04em; text-transform:uppercase; display:flex; align-items:center; gap:6px;
+  }
+  .add-btn:active{filter:brightness(.9);}
+
+  .legend{
+    display:flex; gap:6px; overflow-x:auto; padding:10px 16px 4px; scrollbar-width:none;
+  }
+  .legend::-webkit-scrollbar{display:none;}
+  .chip{
+    display:flex; align-items:center; gap:6px; background:var(--surface);
+    border:1px solid var(--line); border-radius:20px; padding:5px 10px 5px 6px;
+    font-size:11px; white-space:nowrap; color:var(--text-dim); flex-shrink:0;
+  }
+  .chip .dot{width:11px; height:11px; border-radius:3px; flex-shrink:0;}
+
+  .board-wrap{ padding:12px 0 100px; }
+  .board-scroll{ overflow-x:auto; padding-left:16px; }
+  table.board{ border-collapse:separate; border-spacing:0; }
+
+  .name-col{
+    position:sticky; left:0; z-index:5; background:var(--bg);
+    padding-right:8px; width:120px; min-width:120px;
+  }
+  th.name-col, td.name-col{ background:var(--bg); }
+
+  thead th{
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600;
+    color:var(--text-dim); padding:4px 3px; text-align:center; vertical-align:bottom;
+  }
+  thead th.wknd{ color:var(--amber); }
+  thead .daynum{ display:block; font-size:12px; color:var(--text); }
+  thead .wk{ display:block; font-size:9px; margin-top:1px; }
+  thead th.wknd .daynum, thead th.wknd .wk{
+    position:relative;
+  }
+  thead th.wknd::before{
+    content:''; position:absolute; left:2px; right:2px; top:-2px; height:3px;
+    background:repeating-linear-gradient(45deg, var(--amber) 0 3px, #12151a 3px 6px);
+    border-radius:2px;
+  }
+  thead th{ position:relative; }
+
+  .emp-name-cell{
+    padding:6px 8px; border-radius:8px; background:var(--surface);
+    border:1px solid var(--line); font-size:13px; font-weight:500;
+    display:flex; align-items:center; justify-content:space-between; gap:6px;
+    height:38px;
+  }
+  .emp-name-cell input{
+    background:transparent; border:none; color:var(--text); font-size:13px;
+    outline:none; width:100%; font-family:'Inter',sans-serif;
+  }
+  .emp-name-cell .del{
+    color:#5a6270; font-size:15px; padding:0 2px; flex-shrink:0; line-height:1;
+  }
+  .emp-name-cell .del:active{ color:var(--c-folga); }
+
+  tr.emp-row td{ padding:2px; }
+  .cell{
+    width:34px; height:38px; border-radius:6px; background:var(--surface2);
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700;
+    color:rgba(0,0,0,.55); user-select:none;
+  }
+  .cell.wknd-bg{ background:#232a1f0; }
+  .cell[data-status="T"]{ background:var(--c-trabalho); color:#0a1730; }
+  .cell[data-status="F"]{ background:var(--c-folga); color:#310808; }
+  .cell[data-status="V"]{ background:var(--c-ferias); color:#062710; }
+  .cell[data-status="A"]{ background:var(--c-atestado); color:#2e2405; }
+  .cell[data-status="D"]{ background:var(--c-afastamento); color:#e8eaed; }
+
+  .empty-state{
+    margin:40px 20px; text-align:center; color:var(--text-dim); font-size:14px; line-height:1.6;
+  }
+  .empty-state .stamp{ display:block; color:var(--text); font-size:17px; margin-bottom:8px; }
+
+  footer.bar{
+    position:fixed; bottom:0; left:0; right:0; z-index:30;
+    background:var(--surface); border-top:1px solid var(--line);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    display:flex; gap:8px;
+  }
+  footer.bar button{
+    flex:1; background:var(--surface3); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:11px; font-family:'Oswald',sans-serif; font-weight:600;
+    font-size:12px; letter-spacing:.04em; text-transform:uppercase;
+  }
+  footer.bar button.primary{ background:var(--amber); color:#1a1204; border-color:var(--amber); }
+  footer.bar button:active{ filter:brightness(.9); }
+
+  .modal-bg{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:50;
+    display:flex; align-items:flex-end; justify-content:center;
+  }
+  .modal{
+    background:var(--surface); border-radius:16px 16px 0 0; width:100%; max-width:480px;
+    padding:18px 16px calc(18px + env(safe-area-inset-bottom));
+  }
+  .modal h3{ margin:0 0 12px; font-family:'Oswald',sans-serif; font-size:15px; letter-spacing:.03em;}
+  .status-opt{
+    display:flex; align-items:center; gap:12px; padding:12px 8px; border-radius:10px;
+    font-size:14px; font-weight:500;
+  }
+  .status-opt:active{ background:var(--surface3); }
+  .status-opt .dot{ width:20px; height:20px; border-radius:5px; flex-shrink:0; }
+  .modal .cancel{
+    margin-top:8px; width:100%; background:var(--surface3); border:none; color:var(--text-dim);
+    padding:12px; border-radius:10px; font-size:13px;
+  }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><div class="mark"></div><h1 class="stamp">Escala<span>·</span>Trabalho</h1></div>
+
+  <div class="plate">
+    <label>Setor</label>
+    <input type="text" id="sectorInput" placeholder="Ex: Solda por Resistência - 1º Turno">
+  </div>
+
+  <div class="month-row">
+    <div class="month-nav">
+      <button id="prevMonth">‹</button>
+      <span class="month-label" id="monthLabel">—</span>
+      <button id="nextMonth">›</button>
+    </div>
+    <button class="add-btn" id="addEmpBtn">+ Colaborador</button>
+  </div>
+</header>
+
+<div class="legend">
+  <div class="chip"><span class="dot" style="background:var(--c-trabalho)"></span>Trabalho</div>
+  <div class="chip"><span class="dot" style="background:var(--c-folga)"></span>Folga</div>
+  <div class="chip"><span class="dot" style="background:var(--c-ferias)"></span>Férias</div>
+  <div class="chip"><span class="dot" style="background:var(--c-atestado)"></span>Atestado</div>
+  <div class="chip"><span class="dot" style="background:var(--c-afastamento)"></span>Afastamento</div>
+</div>
+
+<div class="board-wrap" id="boardWrap"></div>
+
+<footer class="bar">
+  <button id="exportBtn">Exportar CSV</button>
+  <button class="primary" id="clearMonthBtn">Limpar mês</button>
+</footer>
+
+<div class="modal-bg hidden" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">Definir status</h3>
+    <div id="statusOpts"></div>
+    <button class="cancel" id="modalCancel">Cancelar</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var STORAGE_KEY = 'escalaTrabalho_v1';
+  var STATUSES = [
+    {code:'', label:'Sem marcação', color:null},
+    {code:'T', label:'Trabalho', color:'var(--c-trabalho)'},
+    {code:'F', label:'Folga', color:'var(--c-folga)'},
+    {code:'V', label:'Férias', color:'var(--c-ferias)'},
+    {code:'A', label:'Atestado', color:'var(--c-atestado)'},
+    {code:'D', label:'Afastamento', color:'var(--c-afastamento)'}
+  ];
+  var WEEKDAYS = ['D','S','T','Q','Q','S','S'];
+
+  var state = load();
+  var today = new Date();
+  var current = { y: today.getFullYear(), m: today.getMonth() };
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return { sector:'', employees:[], schedule:{} };
+  }
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+  function monthKey(y,m){ return y+'-'+String(m+1).padStart(2,'0'); }
+  function daysInMonth(y,m){ return new Date(y, m+1, 0).getDate(); }
+  function uid(){ return 'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+  var sectorInput = document.getElementById('sectorInput');
+  var monthLabel = document.getElementById('monthLabel');
+  var boardWrap = document.getElementById('boardWrap');
+  var modalBg = document.getElementById('modalBg');
+  var statusOpts = document.getElementById('statusOpts');
+  var modalTitle = document.getElementById('modalTitle');
+
+  sectorInput.value = state.sector || '';
+  sectorInput.addEventListener('input', function(){
+    state.sector = sectorInput.value; save();
+  });
+
+  var MONTH_NAMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  function renderMonthLabel(){
+    monthLabel.textContent = MONTH_NAMES[current.m].slice(0,3).toUpperCase()+' / '+current.y;
+  }
+
+  document.getElementById('prevMonth').addEventListener('click', function(){
+    current.m--; if(current.m<0){ current.m=11; current.y--; }
+    render();
+  });
+  document.getElementById('nextMonth').addEventListener('click', function(){
+    current.m++; if(current.m>11){ current.m=0; current.y++; }
+    render();
+  });
+
+  document.getElementById('addEmpBtn').addEventListener('click', function(){
+    state.employees.push({ id: uid(), name: '' });
+    save(); render();
+    setTimeout(function(){
+      var inputs = document.querySelectorAll('.emp-name-cell input');
+      if(inputs.length) inputs[inputs.length-1].focus();
+    }, 50);
+  });
+
+  document.getElementById('clearMonthBtn').addEventListener('click', function(){
+    if(!confirm('Limpar todas as marcações de '+MONTH_NAMES[current.m]+'/'+current.y+'?')) return;
+    var key = monthKey(current.y, current.m);
+    delete state.schedule[key];
+    save(); render();
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', exportCSV);
+
+  function exportCSV(){
+    var key = monthKey(current.y, current.m);
+    var nd = daysInMonth(current.y, current.m);
+    var rows = [];
+    var header = ['Colaborador'];
+    for(var d=1; d<=nd; d++) header.push(String(d));
+    rows.push(header.join(';'));
+    state.employees.forEach(function(emp){
+      var row = [emp.name || '(sem nome)'];
+      var monthData = (state.schedule[key] && state.schedule[key][emp.id]) || {};
+      for(var d=1; d<=nd; d++) row.push(monthData[d] || '');
+      rows.push(row.join(';'));
+    });
+    var csv = rows.join('\n');
+    var blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var sectorSlug = (state.sector||'escala').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    a.href = url;
+    a.download = sectorSlug+'_'+key+'.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function getCell(empId, day){
+    var key = monthKey(current.y, current.m);
+    return (state.schedule[key] && state.schedule[key][empId] && state.schedule[key][empId][day]) || '';
+  }
+  function setCell(empId, day, code){
+    var key = monthKey(current.y, current.m);
+    if(!state.schedule[key]) state.schedule[key] = {};
+    if(!state.schedule[key][empId]) state.schedule[key][empId] = {};
+    if(code === '') delete state.schedule[key][empId][day];
+    else state.schedule[key][empId][day] = code;
+    save();
+  }
+
+  function openStatusModal(empId, day, cellEl){
+    modalTitle.textContent = 'Dia '+day+' — definir status';
+    statusOpts.innerHTML = '';
+    STATUSES.forEach(function(s){
+      var el = document.createElement('div');
+      el.className = 'status-opt';
+      var dotStyle = s.color ? 'background:'+s.color : 'background:transparent;border:1px dashed #555';
+      el.innerHTML = '<span class="dot" style="'+dotStyle+'"></span><span>'+s.label+'</span>';
+      el.addEventListener('click', function(){
+        setCell(empId, day, s.code);
+        cellEl.setAttribute('data-status', s.code);
+        cellEl.textContent = s.code;
+        closeModal();
+      });
+      statusOpts.appendChild(el);
+    });
+    modalBg.classList.remove('hidden');
+  }
+  function closeModal(){ modalBg.classList.add('hidden'); }
+  document.getElementById('modalCancel').addEventListener('click', closeModal);
+  modalBg.addEventListener('click', function(e){ if(e.target === modalBg) closeModal(); });
+
+  function removeEmployee(empId){
+    if(!confirm('Remover este colaborador da escala?')) return;
+    state.employees = state.employees.filter(function(e){ return e.id !== empId; });
+    Object.keys(state.schedule).forEach(function(k){
+      if(state.schedule[k][empId]) delete state.schedule[k][empId];
+    });
+    save(); render();
+  }
+
+  function render(){
+    renderMonthLabel();
+    boardWrap.innerHTML = '';
+
+    if(state.employees.length === 0){
+      var empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.innerHTML = '<span class="stamp">Nenhum colaborador ainda</span>Toque em "+ Colaborador" para começar a montar a escala do mês.';
+      boardWrap.appendChild(empty);
+      return;
+    }
+
+    var nd = daysInMonth(current.y, current.m);
+    var scrollDiv = document.createElement('div');
+    scrollDiv.className = 'board-scroll';
+    var table = document.createElement('table');
+    table.className = 'board';
+
+    var thead = document.createElement('thead');
+    var htr = document.createElement('tr');
+    var thName = document.createElement('th');
+    thName.className = 'name-col';
+    htr.appendChild(thName);
+    for(var d=1; d<=nd; d++){
+      var dow = new Date(current.y, current.m, d).getDay();
+      var th = document.createElement('th');
+      var isWknd = (dow === 0 || dow === 6);
+      if(isWknd) th.className = 'wknd';
+      th.innerHTML = '<span class="daynum">'+d+'</span><span class="wk">'+WEEKDAYS[dow]+'</span>';
+      htr.appendChild(th);
+    }
+    thead.appendChild(htr);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    state.employees.forEach(function(emp){
+      var tr = document.createElement('tr');
+      tr.className = 'emp-row';
+      var tdName = document.createElement('td');
+      tdName.className = 'name-col';
+      var nameCell = document.createElement('div');
+      nameCell.className = 'emp-name-cell';
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'Nome';
+      input.value = emp.name || '';
+      input.addEventListener('input', function(){
+        emp.name = input.value; save();
+      });
+      var del = document.createElement('span');
+      del.className = 'del';
+      del.textContent = '✕';
+      del.addEventListener('click', function(){ removeEmployee(emp.id); });
+      nameCell.appendChild(input);
+      nameCell.appendChild(del);
+      tdName.appendChild(nameCell);
+      tr.appendChild(tdName);
+
+      for(var d2=1; d2<=nd; d2++){
+        (function(day){
+          var td = document.createElement('td');
+          var cell = document.createElement('div');
+          cell.className = 'cell';
+          var code = getCell(emp.id, day);
+          if(code){ cell.setAttribute('data-status', code); cell.textContent = code; }
+          cell.addEventListener('click', function(){
+            openStatusModal(emp.id, day, cell);
+          });
+          td.appendChild(cell);
+          tr.appendChild(td);
+        })(d2);
+      }
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    scrollDiv.appendChild(table);
+    boardWrap.appendChild(scrollDiv);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
