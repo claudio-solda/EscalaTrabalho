@@ -198,6 +198,16 @@
   }
   .status-opt:active{ background:var(--surface3); }
   .status-opt .dot{ width:20px; height:20px; border-radius:5px; flex-shrink:0; }
+  .status-opt.erase{
+    background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.35);
+    margin-bottom:10px; color:#ef4444; font-weight:600;
+  }
+  .status-opt.erase .dot{
+    background:transparent; border:none; display:flex; align-items:center; justify-content:center;
+    font-size:16px; color:#ef4444;
+  }
+  .status-opt.erase:active{ background:rgba(239,68,68,.18); }
+  .opts-divider{ height:1px; background:var(--line); margin:2px 0 8px; }
   .modal .cancel{
     margin-top:8px; width:100%; background:var(--surface3); border:none; color:var(--text-dim);
     padding:12px; border-radius:10px; font-size:13px;
@@ -253,7 +263,6 @@
   'use strict';
   var STORAGE_KEY = 'escalaTrabalho_v1';
   var STATUSES = [
-    {code:'', label:'Sem marcação', color:null},
     {code:'T', label:'Trabalho', color:'var(--c-trabalho)'},
     {code:'F', label:'Folga', color:'var(--c-folga)'},
     {code:'V', label:'Férias', color:'var(--c-ferias)'},
@@ -367,6 +376,22 @@
   function openStatusModal(empId, day, cellEl){
     modalTitle.textContent = 'Dia '+day+' — definir status';
     statusOpts.innerHTML = '';
+
+    var eraseEl = document.createElement('div');
+    eraseEl.className = 'status-opt erase';
+    eraseEl.innerHTML = '<span class="dot">✕</span><span>Apagar marcação</span>';
+    eraseEl.addEventListener('click', function(){
+      setCell(empId, day, '');
+      cellEl.removeAttribute('data-status');
+      cellEl.textContent = '';
+      closeModal();
+    });
+    statusOpts.appendChild(eraseEl);
+
+    var divider = document.createElement('div');
+    divider.className = 'opts-divider';
+    statusOpts.appendChild(divider);
+
     STATUSES.forEach(function(s){
       var el = document.createElement('div');
       el.className = 'status-opt';
