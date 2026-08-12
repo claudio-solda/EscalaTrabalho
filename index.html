@@ -29,6 +29,8 @@
     --c-ferias:#22c55e;
     --c-atestado:#eab308;
     --c-afastamento:#64748b;
+    --c-hextra:#a855f7;
+    --c-bh:#06b6d4;
     --c-empty: transparent;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
@@ -163,6 +165,8 @@
   .cell[data-status="V"]{ background:var(--c-ferias); color:#062710; }
   .cell[data-status="A"]{ background:var(--c-atestado); color:#2e2405; }
   .cell[data-status="D"]{ background:var(--c-afastamento); color:#e8eaed; }
+  .cell[data-status="HE"]{ background:var(--c-hextra); color:#2b0a3d; font-size:8.5px; }
+  .cell[data-status="BH"]{ background:var(--c-bh); color:#03242b; font-size:8.5px; }
 
   .empty-state{
     margin:40px 20px; text-align:center; color:var(--text-dim); font-size:14px; line-height:1.6;
@@ -241,6 +245,8 @@
   <div class="chip"><span class="dot" style="background:var(--c-ferias)"></span>Férias</div>
   <div class="chip"><span class="dot" style="background:var(--c-atestado)"></span>Atestado</div>
   <div class="chip"><span class="dot" style="background:var(--c-afastamento)"></span>Afastamento</div>
+  <div class="chip"><span class="dot" style="background:var(--c-hextra)"></span>Hora Extra</div>
+  <div class="chip"><span class="dot" style="background:var(--c-bh)"></span>BH · Banco de Horas</div>
 </div>
 
 <div class="board-wrap" id="boardWrap"></div>
@@ -267,7 +273,9 @@
     {code:'F', label:'Folga', color:'var(--c-folga)'},
     {code:'V', label:'Férias', color:'var(--c-ferias)'},
     {code:'A', label:'Atestado', color:'var(--c-atestado)'},
-    {code:'D', label:'Afastamento', color:'var(--c-afastamento)'}
+    {code:'D', label:'Afastamento', color:'var(--c-afastamento)'},
+    {code:'HE', label:'Hora Extra', color:'var(--c-hextra)'},
+    {code:'BH', label:'BH · Banco de Horas', color:'var(--c-bh)'}
   ];
   var WEEKDAYS = ['D','S','T','Q','Q','S','S'];
 
